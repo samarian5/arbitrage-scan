@@ -1,0 +1,9 @@
+name: calltest
+on:
+  workflow_dispatch:
+jobs:
+  call:
+    uses: samarian5/arbitrage-scan/.github/workflows/crawl-slice.yml@main
+    with:
+      slot: t1
+      slices: 1
