@@ -37,8 +37,11 @@ concurrency:
   group: crawl-${{ inputs.slot || 'w1' }}
   cancel-in-progress: false
 
-permissions:
-  contents: write
+# Deliberately no `permissions:` block. A reusable workflow that requests write
+# scope makes every cross-repo call fail at validation with `startup_failure`
+# and zero jobs — the caller cannot grant it either, because a `uses:` job's
+# token is fixed at call time. Diagnostics therefore go to the artifact and to
+# the step summary, not to a commit on the branch.
 
 jobs:
   slice:
@@ -113,24 +116,28 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: slice-${{ github.run_id }}-${{ inputs.slot || 'w1' }}
-          path: out/
+          path: |
+            out/
+            runs/
           retention-days: 3
           if-no-files-found: ignore
 
       # Keep the failure reason readable without an authenticated log download:
-      # the proxy truncates logs, artifacts are binary, a committed JSON is text.
+      # the proxy truncates logs, artifacts are binary, a JSON file is text.
       - name: Persist run diagnostics
         if: always()
         run: |
-          set -e
           mkdir -p runs
           python - <<'PY' > runs/last.json || true
           import json, pathlib
           p = pathlib.Path("out/meta.json")
           print(json.dumps(json.loads(p.read_text()) if p.exists() else [], indent=1))
           PY
-          git config user.name "scan-bot"
-          git config user.email "scan@users.noreply.github.com"
-          git add runs
-          git commit -m "run diagnostics $(date -u +%FT%TZ)" || echo "no change"
-          git push || echo "push skipped"
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY" || true
+          import json, pathlib
+          p = pathlib.Path("runs/last.json")
+          rows = json.loads(p.read_text()) if p.exists() else []
+          print("```json")
+          print(json.dumps(rows, indent=1)[:4000])
+          print("```")
+          PY
