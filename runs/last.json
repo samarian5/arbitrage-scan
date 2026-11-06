@@ -1,1 +1,176 @@
-[]
+[
+ {
+  "run_id": "run-20261106T210016-7e6226",
+  "keyword": "dryer sheets",
+  "keyword_id": 720,
+  "page_from": 1,
+  "page_to": 2,
+  "tiers": "",
+  "challenges": 1,
+  "stopped_reason": "ebay_blocked",
+  "errors": [
+   "ebay p1: ebay browser lane also blocked on page 1: short_body_1880"
+  ],
+  "ebay_seen": 0,
+  "amazon_seen": 0,
+  "duration_s": 14.9,
+  "rows_written": 0,
+  "matches": 0
+ },
+ {
+  "run_id": "run-20261106T210033-bc6816",
+  "keyword": "monitor arm",
+  "keyword_id": 1440,
+  "page_from": 1,
+  "page_to": 2,
+  "tiers": "amazon:safari_direct,ebay:browser,ebay:http",
+  "challenges": 1,
+  "stopped_reason": "depth",
+  "errors": [],
+  "ebay_seen": 120,
+  "amazon_seen": 35,
+  "duration_s": 31.2,
+  "rows_written": 155,
+  "matches": 1
+ },
+ {
+  "run_id": "run-20261106T210105-99f749",
+  "keyword": "usb to usb c adapter",
+  "keyword_id": 2160,
+  "page_from": 1,
+  "page_to": 2,
+  "tiers": "",
+  "challenges": 1,
+  "stopped_reason": "ebay_blocked",
+  "errors": [
+   "ebay p1: ebay browser lane also blocked on page 1: short_body_1882"
+  ],
+  "ebay_seen": 0,
+  "amazon_seen": 0,
+  "duration_s": 13.2,
+  "rows_written": 0,
+  "matches": 0
+ },
+ {
+  "run_id": "run-20261106T210119-eea9a3",
+  "keyword": "12 impact socket set",
+  "keyword_id": 1,
+  "page_from": 1,
+  "page_to": 2,
+  "tiers": "amazon:chrome_warm,ebay:http",
+  "challenges": 1,
+  "stopped_reason": "ebay_blocked",
+  "errors": [
+   "ebay p2: ebay browser lane also blocked on page 2: short_body_1882"
+  ],
+  "ebay_seen": 60,
+  "amazon_seen": 48,
+  "duration_s": 26.7,
+  "rows_written": 108,
+  "matches": 3
+ },
+ {
+  "run_id": "run-20261106T210147-693676",
+  "keyword": "dryer vacuum hose attachment",
+  "keyword_id": 721,
+  "page_from": 1,
+  "page_to": 2,
+  "tiers": "amazon:safari_direct,ebay:http",
+  "challenges": 1,
+  "stopped_reason": "ebay_blocked",
+  "errors": [
+   "ebay p2: ebay browser lane also blocked on page 2: short_body_1882"
+  ],
+  "ebay_seen": 60,
+  "amazon_seen": 48,
+  "duration_s": 26.9,
+  "rows_written": 108,
+  "matches": 1
+ },
+ {
+  "run_id": "run-20261106T210215-7b9cfe",
+  "keyword": "monitor light bar",
+  "keyword_id": 1441,
+  "page_from": 1,
+  "page_to": 2,
+  "tiers": "",
+  "challenges": 1,
+  "stopped_reason": "ebay_blocked",
+  "errors": [
+   "ebay p1: ebay browser lane also blocked on page 1: short_body_1882"
+  ],
+  "ebay_seen": 0,
+  "amazon_seen": 0,
+  "duration_s": 12.9,
+  "rows_written": 0,
+  "matches": 0
+ },
+ {
+  "run_id": "run-20261106T210229-070681",
+  "keyword": "usb to usb c cable",
+  "keyword_id": 2161,
+  "page_from": 1,
+  "page_to": 2,
+  "tiers": "amazon:chrome_warm,ebay:http",
+  "challenges": 1,
+  "stopped_reason": "ebay_blocked",
+  "errors": [
+   "ebay p2: ebay browser lane also blocked on page 2: short_body_1882"
+  ],
+  "ebay_seen": 60,
+  "amazon_seen": 16,
+  "duration_s": 24.6,
+  "rows_written": 76,
+  "matches": 0
+ },
+ {
+  "run_id": "run-20261106T210254-f90b79",
+  "keyword": "12v dewalt tools",
+  "keyword_id": 2,
+  "page_from": 1,
+  "page_to": 2,
+  "tiers": "amazon:chrome_warm,ebay:http",
+  "challenges": 0,
+  "stopped_reason": "depth",
+  "errors": [],
+  "ebay_seen": 120,
+  "amazon_seen": 96,
+  "duration_s": 24.4,
+  "rows_written": 216,
+  "matches": 0
+ },
+ {
+  "run_id": "run-20261106T210320-4c161b",
+  "keyword": "dryer vent",
+  "keyword_id": 722,
+  "page_from": 1,
+  "page_to": 2,
+  "tiers": "",
+  "challenges": 1,
+  "stopped_reason": "ebay_blocked",
+  "errors": [
+   "ebay p1: ebay browser lane also blocked on page 1: short_body_1882"
+  ],
+  "ebay_seen": 0,
+  "amazon_seen": 0,
+  "duration_s": 12.8,
+  "rows_written": 0,
+  "matches": 0
+ },
+ {
+  "run_id": "run-20261106T210334-297147",
+  "keyword": "monitor mount",
+  "keyword_id": 1442,
+  "page_from": 1,
+  "page_to": 2,
+  "tiers": "amazon:chrome_warm,ebay:browser,ebay:http",
+  "challenges": 1,
+  "stopped_reason": "depth",
+  "errors": [],
+  "ebay_seen": 120,
+  "amazon_seen": 32,
+  "duration_s": 27.8,
+  "rows_written": 152,
+  "matches": 0
+ }
+]
