@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arbitrage Scanner — eBay vs Amazon</title>
+<meta name="build" content="dev">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="dot"></span>
+    <h1>Arbitrage Scanner</h1>
+    <span class="sub">eBay resale price vs Amazon cost</span>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<nav class="filters">
+  <div class="f">
+    <label for="q">Search</label>
+    <input id="q" type="search" placeholder="title, brand, ASIN…" autocomplete="off">
+  </div>
+  <div class="f">
+    <label for="minGap">Min net gap</label>
+    <select id="minGap">
+      <option value="250">$2.50</option>
+      <option value="500" selected>$5</option>
+      <option value="1000">$10</option>
+      <option value="2500">$25</option>
+      <option value="5000">$50</option>
+      <option value="10000">$100</option>
+    </select>
+  </div>
+  <div class="f">
+    <label for="minRoi">Min ROI</label>
+    <select id="minRoi">
+      <option value="0">any</option>
+      <option value="15" selected>15%</option>
+      <option value="25">25%</option>
+      <option value="40">40%</option>
+      <option value="60">60%</option>
+    </select>
+  </div>
+  <div class="f">
+    <label for="conf">Confidence</label>
+    <select id="conf">
+      <option value="">any</option>
+      <option value="high" selected>high (model match)</option>
+      <option value="medium">medium</option>
+      <option value="low">low</option>
+    </select>
+  </div>
+  <div class="f">
+    <label for="sort">Sort</label>
+    <select id="sort">
+      <option value="net_gap" selected>net gap</option>
+      <option value="roi_pct">ROI %</option>
+      <option value="gap_pct">gap %</option>
+      <option value="amazon_price">Amazon price</option>
+      <option value="ebay_price">eBay price</option>
+      <option value="score">match score</option>
+    </select>
+  </div>
+  <div class="f grow">
+    <label>&nbsp;</label>
+    <div class="actions">
+      <button id="export" class="ghost">Export CSV</button>
+      <button id="refresh" class="ghost">Refresh</button>
+      <span id="status" class="status"></span>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <div id="error" class="error" hidden></div>
+  <div class="tablewrap">
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th class="w-img"></th>
+          <th>Product</th>
+          <th class="num">Amazon</th>
+          <th class="num">eBay</th>
+          <th class="num">Fees</th>
+          <th class="num">Net gap</th>
+          <th class="num">ROI</th>
+          <th class="num">Match</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div id="empty" class="empty" hidden>
+    <h2>No opportunities yet</h2>
+    <p>The queue is seeded. Once a crawl writes matches above your filters, rows appear here.</p>
+    <p class="mono" id="emptyHint"></p>
+  </div>
+  <div class="foot">
+    <span id="count"></span>
+    <span class="sep">·</span>
+    <span>Fees assume eBay 13.25% + $0.30. Net gap = eBay price − Amazon price − fees.</span>
+  </div>
+</main>
+
+<div id="drawer" class="drawer" hidden>
+  <div class="drawer-bg"></div>
+  <aside class="drawer-body">
+    <button id="close" class="close" aria-label="Close">×</button>
+    <div id="drawerContent"></div>
+  </aside>
+</div>
+
+<script src="./config.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>

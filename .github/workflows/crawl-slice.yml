@@ -1,0 +1,107 @@
+name: crawl-slice
+
+# The worker. Any number of repos can run this at once: they all claim from the
+# same queue function, which hands out disjoint slices (FOR UPDATE SKIP LOCKED)
+# and refuses work past the daily page budget. That is the load balancer — it
+# lives in Postgres, not in a timer, so a dead runner costs one slice and a
+# burst of runners cannot over-crawl.
+on:
+  workflow_call:
+    inputs:
+      slot:
+        type: string
+        default: "w1"
+      slices:
+        type: number
+        default: 10
+    secrets:
+      SUPABASE_URL:
+        required: true
+      SUPABASE_SERVICE_KEY:
+        required: true
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: "worker slot name (keeps concurrency groups disjoint)"
+        default: "w1"
+      slices:
+        description: "max keyword slices this job may take"
+        default: "10"
+      keyword:
+        description: "run this one keyword instead of claiming from the queue"
+        default: ""
+  schedule:
+    - cron: "7 */2 * * *"
+
+concurrency:
+  group: crawl-${{ inputs.slot || 'w1' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  slice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip -q
+          pip install -q -r requirements.txt
+
+      - name: Browser for the eBay lane
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb >/dev/null 2>&1 || true
+          echo "BROWSER_BIN=$(command -v google-chrome || command -v chromium || echo '')" >> "$GITHUB_ENV"
+
+      # Cheap gate: parsers and matcher are pure functions over fixtures, so a
+      # markup regression fails here in 3 s instead of burning a crawl budget.
+      - name: Unit tests
+        run: python -m pytest tests/ -q
+
+      - name: Crawl
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          CI: "true"
+          PYTHONUNBUFFERED: "1"
+          SHARD: ${{ inputs.slot || 'w1' }}
+          KW: ${{ inputs.keyword || '' }}
+        run: |
+          set -o pipefail
+          timeout 3480 xvfb-run -a python -m crawler.run \
+            --slot "${SHARD}" --max-slices ${{ inputs.slices || 10 }} \
+            ${KW:+--keyword "$KW"} 2>&1 | tee crawl.log
+
+      - name: Summary
+        if: always()
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json, pathlib
+          p = pathlib.Path("out/meta.json")
+          if not p.exists():
+              print("no slices claimed this run")
+              raise SystemExit
+          for m in json.loads(p.read_text()):
+              print(f"- **{m.get('keyword')}** — ebay {m.get('ebay_seen',0)}, "
+                    f"amazon {m.get('amazon_seen',0)}, matches {m.get('matches',0)}, "
+                    f"{m.get('stopped_reason')}, {m.get('duration_s')}s")
+          PY
+
+      - name: Upload run bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: slice-${{ github.run_id }}-${{ inputs.slot || 'w1' }}
+          path: out/
+          retention-days: 3
+          if-no-files-found: ignore
