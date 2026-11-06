@@ -1,0 +1,26 @@
+name: probe4
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q "curl_cffi>=0.7"
+      - run: python probe/probe4.py
+      - name: commit
+        run: |
+          git config user.name probe-bot
+          git config user.email probe@users.noreply.github.com
+          git add probe/result4.json
+          git commit -m "probe4 $(date -u +%FT%TZ)" || echo none
+          git push
