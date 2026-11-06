@@ -122,12 +122,20 @@ create or replace function public.ar_claim_slice(p_slot text default null, p_pag
 returns table (keyword_id bigint, keyword text, page_from int, page_to int,
                run_id text, depth int, pass_no int, budget_left int)
 language plpgsql security definer as $$
+#variable_conflict use_column
 declare
   k public.ar_keywords%rowtype;
   v_pages int;
   v_budget int;
   v_used int;
 begin
+  -- Reap slices abandoned by a runner that died mid-flight (workflow cancel,
+  -- OOM, 70-minute timeout). Without this they stay 'running' forever and their
+  -- keyword is never claimed again.
+  update public.ar_keywords
+     set status = 'queued', due_at = now()
+   where status = 'running'
+     and coalesce(last_run_at, now() - interval '2 hours') < now() - interval '45 minutes';
   select coalesce((value)::int, 6000) into v_budget from public.ar_settings where key='daily_page_budget';
   select coalesce(sum(page_to - page_from + 1), 0) into v_used
     from public.ar_runs
@@ -175,7 +183,15 @@ begin
   if not found then return; end if;
 
   if p_status = 'blocked' then
-    update public.ar_keywords set status='blocked', fails = fails + 1 where id = k.id;
+    -- a block is usually transient (rate limit, bad minute, cold profile), so
+    -- back off instead of parking the keyword: 20m, 40m, 80m ... capped at 6h.
+    update public.ar_keywords
+       set status = 'queued',
+           fails = fails + 1,
+           due_at = now() + least(interval '6 hours',
+                                  interval '20 minutes' * power(2, least(fails, 4))),
+           last_reason = left(coalesce(p_reason,'blocked'), 200)
+     where id = k.id;
     return;
   end if;
 

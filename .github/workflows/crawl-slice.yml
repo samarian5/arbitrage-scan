@@ -16,9 +16,9 @@ on:
         default: 10
     secrets:
       SUPABASE_URL:
-        required: true
+        required: false
       SUPABASE_SERVICE_KEY:
-        required: true
+        required: false
   workflow_dispatch:
     inputs:
       slot:

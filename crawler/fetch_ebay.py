@@ -71,12 +71,29 @@ class EbayFetcher:
         b = self._browser()
         b.goto(url, timeout=90)
         html = ""
-        for _ in range(3):
-            time.sleep(3)
+        # SplashUI often clears itself once its JS has run, so patience beats
+        # escalation: reload, wait, and look for real cards rather than giving up
+        # on the first challenge-looking body.
+        for attempt in range(6):
+            time.sleep(3 if attempt < 3 else 5)
             html = b.evaluate("document.documentElement.outerHTML") or ""
             if not is_blocked(html):
                 return html
+            if attempt in (1, 3):
+                try:
+                    b.goto(url, timeout=90)
+                except Exception:  # noqa: BLE001
+                    pass
         return html
+
+    def browser_restart(self) -> None:
+        """Drop the profile in memory and start a clean browser (new fingerprint)."""
+        try:
+            if self.browser is not None:
+                self.browser.quit()
+        except Exception:  # noqa: BLE001
+            pass
+        self.browser = None
 
     # ---- public ----------------------------------------------------------
     def search_page(self, keyword: str, page: int) -> tuple[str, str]:
@@ -101,6 +118,13 @@ class EbayFetcher:
         print(f"[ebay] page {page} blocked ({reason}) -> browser lane", flush=True)
         html = self.browser_get(url)
         still = is_blocked(html)
+        if still:
+            # a block is session-bound, not page-bound: a cold browser sometimes
+            # clears it when reloading the same profile cannot
+            print(f"[ebay] page {page} still blocked ({still}) -> cold browser retry", flush=True)
+            self.browser_restart()
+            html = self.browser_get(url)
+            still = is_blocked(html)
         if still:
             raise RuntimeError(f"ebay browser lane also blocked on page {page}: {still}")
         self.tier_used.append("browser")

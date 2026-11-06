@@ -211,6 +211,13 @@ def main() -> int:
             traceback.print_exc()
             m = {"run_id": slice_.get("run_id"), "keyword": slice_.get("keyword"),
                  "status": "failed", "error": str(e)[:300]}
+            # hand the keyword back immediately with backoff; the reaper in
+            # ar_claim_slice() is only the safety net for a hard-killed runner
+            if slice_.get("keyword_id"):
+                try:
+                    Supa().finish(slice_["keyword_id"], 0, "blocked", str(e)[:200])
+                except Exception:  # noqa: BLE001
+                    pass
         print(json.dumps(m))
         metas.append(m)
         if args.keyword or args.dry_run:
