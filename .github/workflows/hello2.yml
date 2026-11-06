@@ -1,0 +1,26 @@
+name: hello2
+on:
+  workflow_call:
+    inputs:
+      slot: {type: string, default: "w1"}
+      slices: {type: number, default: 10}
+    secrets:
+      SUPABASE_URL: {required: false}
+      SUPABASE_SERVICE_KEY: {required: false}
+  workflow_dispatch:
+    inputs:
+      slot: {description: s, default: "w1"}
+      slices: {description: s, default: "10"}
+      keyword: {description: k, default: ""}
+  schedule:
+    - cron: "7 */2 * * *"
+concurrency:
+  group: crawl-${{ inputs.slot || 'w1' }}
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  hi:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "hi ${{ inputs.slot }}"
