@@ -1,0 +1,119 @@
+{
+  "ip": {
+    "ip": "20.125.191.178",
+    "city": "Chicago",
+    "region": "Illinois",
+    "org": "AS8075 Microsoft Corporation"
+  },
+  "t": "2026-11-06T20:44:50Z",
+  "runs": [
+    {
+      "name": "home_search",
+      "status": 200,
+      "bytes": 1861230,
+      "cards": 48,
+      "asins": 58,
+      "title": "Amazon.com : dewalt 20v drill",
+      "seconds": 2.8,
+      "impersonate": "chrome"
+    },
+    {
+      "name": "home_best_search",
+      "status": 200,
+      "bytes": 2323,
+      "cards": 0,
+      "asins": 0,
+      "title": "&nbsp;",
+      "seconds": 3.4,
+      "impersonate": "chrome"
+    },
+    {
+      "name": "home_dp_search",
+      "status": 200,
+      "bytes": 2323,
+      "cards": 0,
+      "asins": 0,
+      "title": "&nbsp;",
+      "seconds": 3.3,
+      "impersonate": "chrome"
+    },
+    {
+      "name": "search_only_safari",
+      "status": 200,
+      "bytes": 1757968,
+      "cards": 48,
+      "asins": 58,
+      "title": "Amazon.com : dewalt 20v drill",
+      "seconds": 1.3,
+      "impersonate": "safari"
+    },
+    {
+      "name": "home_search_safari",
+      "status": 200,
+      "bytes": 1949025,
+      "cards": 48,
+      "asins": 59,
+      "title": "Amazon.com : dewalt 20v drill",
+      "seconds": 2.8,
+      "impersonate": "safari"
+    },
+    {
+      "name": "home_search_edge",
+      "status": 503,
+      "bytes": 2671,
+      "cards": 0,
+      "asins": 0,
+      "title": "Sorry! Something went wrong!",
+      "seconds": 1.6,
+      "impersonate": "edge101"
+    },
+    {
+      "name": "home_search_mobile",
+      "status": 200,
+      "bytes": 1533031,
+      "cards": 19,
+      "asins": 30,
+      "title": "Amazon.com : dewalt 20v drill",
+      "seconds": 2.9,
+      "impersonate": "chrome"
+    },
+    {
+      "name": "home_twice_search",
+      "status": 200,
+      "bytes": 1739878,
+      "cards": 48,
+      "asins": 57,
+      "title": "Amazon.com : dewalt 20v drill",
+      "seconds": 4.3,
+      "impersonate": "chrome"
+    }
+  ],
+  "retest": [
+    {
+      "name": "retest_home_search",
+      "status": 200,
+      "bytes": 1842735,
+      "cards": 48,
+      "asins": 60,
+      "title": "Amazon.com : dewalt 20v drill",
+      "seconds": 2.7,
+      "impersonate": "chrome"
+    },
+    {
+      "name": "retest_search_only_safari",
+      "status": 200,
+      "bytes": 1752226,
+      "cards": 48,
+      "asins": 57,
+      "title": "Amazon.com : dewalt 20v drill",
+      "seconds": 2.7,
+      "impersonate": "safari"
+    }
+  ],
+  "verdict": [
+    "home_search",
+    "search_only_safari",
+    "home_search_safari",
+    "home_twice_search"
+  ]
+}
