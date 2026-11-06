@@ -1,18 +1,1 @@
-[
- {
-  "run_id": "adhoc-1793998044",
-  "keyword": "dewalt 20v drill",
-  "keyword_id": null,
-  "page_from": 1,
-  "page_to": 1,
-  "tiers": "amazon:chrome_warm,ebay:http",
-  "challenges": 0,
-  "stopped_reason": "depth",
-  "errors": [],
-  "ebay_seen": 60,
-  "amazon_seen": 48,
-  "duration_s": 11.7,
-  "rows_written": 108,
-  "matches": 3
- }
-]
+[]
