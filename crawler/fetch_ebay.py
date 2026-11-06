@@ -69,6 +69,16 @@ class EbayFetcher:
     def browser_get(self, url: str) -> str:
         from .parse_ebay import is_blocked
         b = self._browser()
+        # Same finding as the Amazon lane: the search URL is judged harder than
+        # the homepage. One homepage visit plants the cookie set that makes the
+        # following /sch/ request look like a browse session rather than a hit.
+        if not getattr(self, "_warmed", False):
+            try:
+                b.goto("https://www.ebay.com/", timeout=60)
+                time.sleep(2.0)
+            except Exception:  # noqa: BLE001
+                pass
+            self._warmed = True
         b.goto(url, timeout=90)
         html = ""
         # SplashUI often clears itself once its JS has run, so patience beats
@@ -94,6 +104,7 @@ class EbayFetcher:
         except Exception:  # noqa: BLE001
             pass
         self.browser = None
+        self._warmed = False
 
     # ---- public ----------------------------------------------------------
     def search_page(self, keyword: str, page: int) -> tuple[str, str]:

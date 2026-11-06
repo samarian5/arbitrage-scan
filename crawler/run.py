@@ -222,6 +222,9 @@ def main() -> int:
         metas.append(m)
         if args.keyword or args.dry_run:
             break
+        # Pace slices: four workers hitting the same sites in the same minute is
+        # what turns a 30% block rate into a 70% one.
+        time.sleep(6 + (hash(m.get("keyword") or "") % 7))
 
     (OUT / "meta.json").write_text(json.dumps(metas, indent=2))
     return 0
