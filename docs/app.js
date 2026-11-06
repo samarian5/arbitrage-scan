@@ -11,9 +11,9 @@ const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, f
 const state = {
   rows: [],
   sort: "net_gap",
-  minGap: 500,
-  minRoi: 15,
-  conf: "high",
+  minGap: 250,
+  minRoi: 0,
+  conf: "",
   q: "",
   loading: false,
 };
