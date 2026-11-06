@@ -1,0 +1,10 @@
+name: hello
+on:
+  workflow_call:
+    inputs:
+      slot: {type: string, default: "x"}
+jobs:
+  hi:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "hello from ${{ inputs.slot }}"
