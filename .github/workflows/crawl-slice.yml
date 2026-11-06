@@ -48,7 +48,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 70
     steps:
+      # When this workflow is *called* from a shard repo, github.repository is
+      # the shard and a bare checkout would land an empty tree (no requirements,
+      # no crawler). Pin to the repo that owns the code instead.
       - uses: actions/checkout@v4
+        with:
+          repository: samarian5/arbitrage-scan
+          ref: main
 
       - uses: actions/setup-python@v5
         with:
