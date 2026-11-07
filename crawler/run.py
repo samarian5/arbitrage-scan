@@ -16,6 +16,7 @@ import os
 import sys
 import time
 import traceback
+import urllib.parse
 from pathlib import Path
 
 from . import matcher
@@ -42,6 +43,20 @@ def enrich(rows: list[dict], keyword_id: int | None, page: int) -> list[dict]:
         out.append(r)
     return out
 
+
+def fetch_amazon_price_sorted(fetcher, keyword: str, page: int = 1) -> tuple[str, str]:
+    """Fetch Amazon search sorted by price ascending (cheapest first).
+
+    This finds the cheapest Amazon listing for a product, maximizing
+    the arbitrage gap. Falls back to relevance sort if price sort fails.
+    """
+    url = f"https://www.amazon.com/s?k={urllib.parse.quote_plus(keyword)}&s=price-asc-rank&page={page}"
+    try:
+        html, tier = fetcher.fetch_url(url)
+        return html, tier
+    except Exception:
+        # Fall back to normal search
+        return fetcher.search_page(keyword, page)
 
 def run_slice(slice_: dict, args) -> dict:
     keyword = slice_["keyword"]
@@ -88,6 +103,20 @@ def run_slice(slice_: dict, args) -> dict:
                 if meta["stopped_reason"] == "depth":
                     meta["stopped_reason"] = "amazon_blocked"
 
+            # ---- Amazon (price-asc sort for cheapest listings) ----
+            if page == page_from:
+                try:
+                    html2, tier2 = fetch_amazon_price_sorted(amazon, keyword, page)
+                    rows2 = enrich(parse_amazon_html(html2), kid, page)
+                    seen_asins = {r["platform_id"] for r in am_rows}
+                    for r in rows2:
+                        if r["platform_id"] not in seen_asins:
+                            am_rows.append(r)
+                            seen_asins.add(r["platform_id"])
+                    meta["tiers"].append(f"amazon_priceasc:{tier2}")
+                except Exception as e:
+                    meta["errors"].append(f"amazon_priceasc p{page}: {e}")
+
             if page < page_to:
                 amz_pace()
 
@@ -113,7 +142,7 @@ def run_slice(slice_: dict, args) -> dict:
 
     # ---- ingest ----------------------------------------------------------
     db = Supa()
-    threshold = float(db.setting("match_threshold", "0.72") or 0.72)
+    threshold = float(db.setting("match_threshold", "0.65") or 0.65)
 
     db.update_run(run_id, {"ebay_seen": len(eb_rows), "amazon_seen": len(am_rows),
                            "challenges": meta["challenges"], "tiers": meta["tiers"]})
