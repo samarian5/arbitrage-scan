@@ -11,10 +11,7 @@ on:
     inputs:
       slot: {description: s, default: "w1"}
       slices: {description: s, default: "10"}
-      keyword: {description: k, default: ""}
-  schedule:
-    - cron: "7 */2 * * *"
-permissions:
+      keyword: {description: k, default: ""}permissions:
   contents: write
 jobs:
   hi:
