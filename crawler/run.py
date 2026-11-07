@@ -37,9 +37,15 @@ def enrich(rows: list[dict], keyword_id: int | None, page: int) -> list[dict]:
         r["tokens"] = matcher.tokens(r.get("title"))
         r["keyword_id"] = keyword_id
         r["page"] = page
+        # Map eBay units_badge to units_sold for demand tracking
+        if "units_sold" not in r and r.get("units_badge") is not None:
+            r["units_sold"] = r["units_badge"]
         # eBay's free-shipping flag is real; a null means "not stated", not "paid"
         if r.get("shipping_cents") is None:
             r["shipping_cents"] = 0
+        # Ensure units_sold is set (None for Amazon)
+        if "units_sold" not in r:
+            r["units_sold"] = None
         out.append(r)
     return out
 
