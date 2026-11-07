@@ -66,6 +66,7 @@ td img{width:34px;height:34px;object-fit:contain;background:#fff;border-radius:5
 .chip.high{color:var(--green);border-color:#1d4b38;background:var(--green-dim)}
 .chip.medium{color:var(--amber);border-color:#4a3a1c;background:#2a2113}
 .chip.low{color:var(--faint)}
+.chip.demand{color:var(--amber);border-color:#4a3a1c;background:#2a2113}
 .gap-pos{color:var(--green);font-weight:650}
 .gap-neg{color:var(--red)}
 .roi{font-weight:650}

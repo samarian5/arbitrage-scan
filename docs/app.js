@@ -16,6 +16,8 @@ const state = {
   conf: "",
   q: "",
   loading: false,
+  pageSize: 120,
+  hasMore: false,
 };
 
 const money = (c) => (c == null ? "—" : "$" + (c / 100).toLocaleString(undefined,
@@ -44,9 +46,18 @@ function showError(msg) {
 }
 
 /* ---------------- query ---------------- */
-function queryString() {
+// Explicit column list: keeps the payload small and lets PostgREST use the
+// base tables' indexes instead of shipping every column of the view.
+const LIST_COLS = [
+  "match_id", "method", "score", "evidence",
+  "ebay_item_id", "ebay_title", "ebay_image", "ebay_price", "ebay_units_sold",
+  "asin", "amazon_title", "amazon_price",
+  "gross_gap", "ebay_fee", "net_gap", "gap_pct", "roi_pct", "as_of",
+].join(",");
+
+function queryString(offset) {
   const p = new URLSearchParams();
-  p.set("select", "*");
+  p.set("select", LIST_COLS);
   p.set("net_gap", `gte.${state.minGap}`);
   if (state.minRoi > 0) p.set("roi_pct", `gte.${state.minRoi}`);
   if (state.conf) p.set("evidence->>confidence", `eq.${state.conf}`);
@@ -55,7 +66,8 @@ function queryString() {
     p.set("or", `(ebay_title.ilike.*${q}*,amazon_title.ilike.*${q}*,asin.ilike.*${q}*)`);
   }
   p.set("order", `${state.sort}.desc`);
-  p.set("limit", "500");
+  p.set("limit", String(state.pageSize + 1));   // +1 tells us if more exist
+  if (offset) p.set("offset", String(offset));
   return p.toString();
 }
 
@@ -101,18 +113,36 @@ function escapeHTML(s) {
 function render() {
   const tbody = $("rows");
   if (!tbody) return;
-  tbody.innerHTML = state.rows.map(rowHTML).join("");
+  tbody.innerHTML = "";
+  appendRows(state.rows, 0);
   const empty = $("empty");
   if (empty) empty.hidden = state.rows.length > 0;
+  updateCount();
+}
+
+/* Append only the new rows — re-rendering the whole table on "load more"
+   would throw away images the browser already decoded. */
+function appendRows(rows, base) {
+  const tbody = $("rows");
+  if (!tbody || !rows.length) return;
+  const frag = document.createElement("tbody");
+  frag.innerHTML = rows.map((r, k) => rowHTML(r, base + k)).join("");
+  while (frag.firstChild) {
+    const tr = frag.firstChild;
+    tr.addEventListener("click", () => openDrawer(state.rows[Number(tr.dataset.i)]));
+    tbody.appendChild(tr);
+  }
+}
+
+function updateCount() {
   const count = $("count");
   if (count) {
     count.textContent = state.rows.length
-      ? `showing ${state.rows.length} of the top matches`
+      ? `showing ${state.rows.length}${state.hasMore ? "+" : ""} of the top matches`
       : "no rows match these filters";
   }
-  tbody.querySelectorAll("tr").forEach((tr) => {
-    tr.addEventListener("click", () => openDrawer(state.rows[Number(tr.dataset.i)]));
-  });
+  const more = $("more");
+  if (more) more.hidden = !state.hasMore;
 }
 
 function renderStats(s) {
@@ -140,10 +170,17 @@ function timeAgo(iso) {
 }
 
 /* ---------------- drawer ---------------- */
-function openDrawer(r) {
+async function openDrawer(r) {
   if (!r) return;
   const d = $("drawer"), c = $("drawerContent");
   if (!d || !c) return;
+  // The list query skips the two outbound URLs to keep the payload small.
+  if (!r.ebay_url && r.match_id != null) {
+    try {
+      const extra = await api(`ar_opportunities?select=ebay_url,amazon_url&match_id=eq.${r.match_id}`);
+      if (extra && extra[0]) { r.ebay_url = extra[0].ebay_url; r.amazon_url = extra[0].amazon_url; }
+    } catch (_) { /* links are optional */ }
+  }
   const ev = r.evidence || {};
   const toks = (ev.shared_tokens || []).map((t) => `<span class="tok">${escapeHTML(t)}</span>`).join("");
   const models = (ev.matched_models || []).map((t) => `<span class="tok">${escapeHTML(t)}</span>`).join("");
@@ -183,24 +220,36 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* ---------------- data ---------------- */
-async function load() {
+async function load(opts = {}) {
+  const append = !!opts.append;
   if (state.loading) return;
   state.loading = true;
-  setStatus("loading…");
+  if (!append) setStatus("loading…");
   showError("");
   try {
-    const [rows, stats] = await Promise.all([
-      api(`ar_opportunities?${queryString()}`),
-      api("ar_queue_stats?select=*").then((r) => r[0]).catch(() => null),
-    ]);
-    state.rows = rows || [];
-    renderStats(stats);
-    render();
-    setStatus(`updated ${new Date().toLocaleTimeString()}`);
-    if (stats && !state.rows.length && stats.listings === 0) {
-      const hint = $("emptyHint");
-      if (hint) hint.textContent = `${stats.keywords} keywords queued · ${stats.pages_today} pages crawled today`;
+    const offset = append ? state.rows.length : 0;
+    const tasks = [api(`ar_opportunities?${queryString(offset)}`)];
+    if (!append) tasks.push(api("ar_queue_stats?select=*").then((r) => r[0]).catch(() => null));
+    const [fetched, stats] = await Promise.all(tasks);
+
+    const rows = (fetched || []).slice(0, state.pageSize);
+    state.hasMore = (fetched || []).length > state.pageSize;
+
+    if (append) {
+      const base = state.rows.length;
+      state.rows = state.rows.concat(rows);
+      appendRows(rows, base);
+      updateCount();
+    } else {
+      state.rows = rows;
+      if (stats) renderStats(stats);
+      render();
+      if (stats && !state.rows.length && stats.listings === 0) {
+        const hint = $("emptyHint");
+        if (hint) hint.textContent = `${stats.keywords} keywords queued · ${stats.pages_today} pages crawled today`;
+      }
     }
+    setStatus(`updated ${new Date().toLocaleTimeString()}`);
   } catch (e) {
     showError("Could not load data: " + e.message);
     setStatus("error");
@@ -235,6 +284,7 @@ function bind() {
   on("conf", "change", (e) => { state.conf = e.target.value; syncHash(); load(); });
   on("sort", "change", (e) => { state.sort = e.target.value; syncHash(); load(); });
   on("refresh", "click", load);
+  on("more", "click", () => load({ append: true }));
   on("export", "click", exportCSV);
 }
 
@@ -272,7 +322,12 @@ function boot() {
       return;
     }
     load();
-    setInterval(load, 60000);
+    // Keep the header fresh without disturbing row order or scroll position.
+    // Full re-sorts happen on the explicit Refresh button / filter change.
+    setInterval(() => {
+      if (document.hidden || state.loading) return;
+      api("ar_queue_stats?select=*").then((r) => r[0] && renderStats(r[0])).catch(() => {});
+    }, 60000);
   } catch (e) {
     showError("page failed to start: " + e.message);
   }
