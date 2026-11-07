@@ -110,8 +110,66 @@ def jaccard(a: set[str], b: set[str]) -> float:
     return len(a & b) / len(a | b)
 
 
+def identifier_match(ebay: dict, amazon: dict) -> dict | None:
+    """Match by product identifier (GTIN/UPC/EAN/MPN/ASIN).
+
+    If both sides carry the same identifier, that is an exact-product match
+    regardless of title wording. Returns a match record or None.
+    """
+    # Collect all identifiers from both sides
+    e_ids = set()
+    a_ids = set()
+    for key in ("gtin", "upc", "ean", "mpn", "asin", "platform_id"):
+        v = (ebay.get(key) or "").strip().lower()
+        if v and len(v) >= 8:
+            e_ids.add(v)
+        v = (amazon.get(key) or "").strip().lower()
+        if v and len(v) >= 8:
+            a_ids.add(v)
+
+    shared = e_ids & a_ids
+    if not shared:
+        return None
+
+    # At least one shared identifier → exact match
+    ident = sorted(shared)[0]
+    method = "identifier"
+    confidence = "high"
+
+    # Still apply hard gates for quantity/lot (a 2-pack UPC ≠ single UPC,
+    # but sometimes the same GTIN is reused for different pack sizes)
+    et = ebay.get("title") or ""
+    at = amazon.get("title") or ""
+    if quantity(et) != quantity(at):
+        return None
+    if bool(LOT_RE.search(et)) != bool(LOT_RE.search(at)):
+        return None
+
+    return {
+        "ebay_id": ebay.get("id"),
+        "amazon_id": amazon.get("id"),
+        "ebay_platform_id": ebay.get("platform_id"),
+        "amazon_platform_id": amazon.get("platform_id"),
+        "method": method,
+        "score": 1.0,
+        "confidence": confidence,
+        "evidence": {
+            "matched_identifier": ident,
+            "all_shared": sorted(shared),
+            "match_type": "gtin/upc/mpn/asin",
+        },
+    }
 def match_one(ebay: dict, amazon: dict, threshold: float = 0.72) -> dict | None:
-    """Return a match record, or None. Hard rejections happen before scoring."""
+    """Return a match record, or None. Hard rejections happen before scoring.
+
+    Phase 1: tries identifier match first (GTIN/UPC/MPN/ASIN).
+    Falls back to title/model matching if no shared identifier.
+    """
+    # --- Phase 1: identifier match (highest confidence) ---
+    im = identifier_match(ebay, amazon)
+    if im:
+        return im
+
     et, at = ebay.get("title") or "", amazon.get("title") or ""
     e_brand = (ebay.get("brand") or "").strip().lower()
     a_brand = (amazon.get("brand") or "").strip().lower()
