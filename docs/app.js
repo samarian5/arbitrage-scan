@@ -68,6 +68,8 @@ function rowHTML(r, i) {
   const gap = r.net_gap == null ? 0 : r.net_gap;
   const roi = r.roi_pct == null ? 0 : Number(r.roi_pct);
   const pct = Math.max(0, Math.min(100, roi));
+  const demand = r.ebay_units_sold;
+  const demandBadge = demand ? `<span class="chip demand" title="Sold on eBay">${num(demand)}+ sold</span>` : "";
   return `<tr data-i="${i}">
     <td class="w-img"><img loading="lazy" src="${r.ebay_image || ""}" alt=""
         onerror="this.style.visibility='hidden'"></td>
@@ -75,6 +77,7 @@ function rowHTML(r, i) {
       <div class="p-title">${escapeHTML(r.ebay_title || "")}</div>
       <div class="p-meta">
         <span class="chip ${conf}">${conf}</span>
+        ${demandBadge}
         <span>ASIN ${r.asin || "—"}</span>
         <span>·</span>
         <span>${escapeHTML((r.amazon_title || "").slice(0, 62))}</span>
@@ -161,6 +164,7 @@ function openDrawer(r) {
     <div class="d-row"><span>Gap %</span><span>${Number(r.gap_pct || 0).toFixed(1)}%</span></div>
     <div class="d-row"><span>Match method / score</span><span>${r.method} · ${Number(r.score).toFixed(3)}</span></div>
     <div class="d-row"><span>Observed</span><span>${r.as_of ? new Date(r.as_of).toLocaleString() : "—"}</span></div>
+    ${r.ebay_units_sold ? `<div class="d-row"><span>Demand on eBay</span><span>${num(r.ebay_units_sold)}+ sold</span></div>` : ""}
     <div class="d-h">Why these were paired</div>
     <div class="evidence">${models || '<span class="tok">no model number</span>'}${toks}</div>
     <div class="d-h">Amazon listing</div>
