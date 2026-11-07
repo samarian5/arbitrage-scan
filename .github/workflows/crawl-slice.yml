@@ -30,9 +30,6 @@ on:
       keyword:
         description: "run this one keyword instead of claiming from the queue"
         default: ""
-  schedule:
-    - cron: "7 */2 * * *"
-
 concurrency:
   group: crawl-${{ inputs.slot || 'w1' }}
   cancel-in-progress: false
